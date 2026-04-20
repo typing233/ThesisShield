@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThesisShield - 学术论文对抗性压力测试平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .claim-card {
+            background: linear-gradient(145deg, #f8f9ff 0%, #ffffff 100%);
+            border-left: 4px solid #667eea;
+        }
+        
+        .challenge-card {
+            background: linear-gradient(145deg, #fff5f5 0%, #ffffff 100%);
+            border-left: 4px solid #f56565;
+        }
+        
+        .suggestion-card {
+            background: linear-gradient(145deg, #f0fff4 0%, #ffffff 100%);
+            border-left: 4px solid #48bb78;
+        }
+        
+        .evidence-tag {
+            background: linear-gradient(135deg, #ecc94b 0%, #ed8936 100%);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .tree-node {
+            position: relative;
+            padding-left: 24px;
+        }
+        
+        .tree-node::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e2e8f0;
+        }
+        
+        .tree-node::after {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 16px;
+            width: 16px;
+            height: 2px;
+            background: #e2e8f0;
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-8 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <div>
+                        <h1 class="text-3xl font-bold">ThesisShield</h1>
+                        <p class="text-purple-200 text-sm">学术论文对抗性压力测试平台</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-purple-200">v1.0.0</span>
+                </div>
+            </div>
+            <p class="text-purple-100 max-w-2xl">
+                通过自动解析文本逻辑链并模拟审稿人攻击，帮助学者可视化并修补论证漏洞。
+                让您的学术论文在投稿前就经受住最严苛的逻辑考验。
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto py-8 px-4">
+        <!-- API Key Configuration -->
+        <div class="bg-white rounded-2xl card-shadow p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                </svg>
+                API 配置
+            </h2>
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        DeepSeek API Key
+                    </label>
+                    <input type="password" id="apiKey" placeholder="请输入您的 DeepSeek API Key" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                </div>
+                <div class="md:w-48 flex items-end">
+                    <button onclick="saveApiKey()" class="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                        保存配置
+                    </button>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-3">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                您的 API Key 仅保存在本地浏览器中，不会发送到我们的服务器。
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white rounded-2xl card-shadow p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                输入论文核心论述
+            </h2>
+            <p class="text-gray-600 mb-4">请粘贴论文的摘要、引言或核心论证段落，我们将帮您分析其逻辑结构并发现潜在漏洞。</p>
+            <textarea id="inputText" rows="8" placeholder="例如：&#10;&#10;本研究通过对500名大学生的问卷调查发现，使用社交媒体的时间越长，抑郁症状评分越高（r=0.32, p<0.001）。因此，我们认为过度使用社交媒体会导致抑郁倾向增加。该发现支持了社会比较理论，即用户在社交媒体上频繁接触他人的完美生活展示，会降低自身的自尊水平，进而引发抑郁情绪。建议教育工作者和家长关注青少年的社交媒体使用行为，适时进行干预。"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-vertical font-mono text-sm"></textarea>
+            
+            <div class="flex flex-col sm:flex-row gap-4 mt-6">
+                <button onclick="parseText()" id="parseBtn" 
+                    class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    解析逻辑结构
+                </button>
+                <button onclick="generateChallenges()" id="challengeBtn"
+                    class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg hover:from-red-600 hover:to-orange-600 transition-all font-medium flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    审稿人挑战
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl p-8 text-center">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <p id="loadingText" class="text-gray-700 font-medium">正在分析中...</p>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="hidden space-y-8">
+            <!-- Logic Structure Display -->
+            <div id="parseResults" class="hidden">
+                <div class="bg-white rounded-2xl card-shadow p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                        </svg>
+                        逻辑结构分析
+                    </h2>
+                    
+                    <div id="summarySection" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold text-blue-800 mb-2 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            结构摘要
+                        </h3>
+                        <p id="summaryText" class="text-blue-700"></p>
+                    </div>
+
+                    <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                        </svg>
+                        核心主张与支撑证据
+                    </h3>
+                    <div id="claimsContainer" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <!-- Reviewer Challenges Display -->
+            <div id="challengeResults" class="hidden">
+                <div class="bg-white rounded-2xl card-shadow p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        审稿人挑战
+                    </h2>
+
+                    <div id="overallAssessment" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold text-yellow-800 mb-2 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            总体评估
+                        </h3>
+                        <p id="assessmentText" class="text-yellow-700"></p>
+                    </div>
+
+                    <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        挑战问题
+                    </h3>
+                    <div id="challengesContainer" class="space-y-6"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 px-4 mt-12">
+        <div class="max-w-6xl mx-auto text-center">
+            <div class="flex items-center justify-center mb-4">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                <span class="font-semibold">ThesisShield</span>
+            </div>
+            <p class="text-gray-400 text-sm">帮助学者构建更严谨的学术论证</p>
+            <p class="text-gray-500 text-xs mt-2">© 2024 ThesisShield. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        function getApiKey() {
+            return localStorage.getItem('deepseek_api_key') || document.getElementById('apiKey').value;
+        }
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (apiKey) {
+                localStorage.setItem('deepseek_api_key', apiKey);
+                showToast('API Key 已保存到本地', 'success');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 fade-in ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' : 
+                'bg-blue-500 text-white'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function showLoading(text = '正在分析中...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingIndicator').classList.add('hidden');
+        }
+
+        async function parseText() {
+            const text = document.getElementById('inputText').value.trim();
+            const apiKey = getApiKey();
+
+            if (!text) {
+                showToast('请输入论文核心论述', 'error');
+                return;
+            }
+
+            if (!apiKey) {
+                showToast('请先配置 DeepSeek API Key', 'error');
+                return;
+            }
+
+            showLoading('正在解析逻辑结构...');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/parse`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        api_key: apiKey
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '请求失败');
+                }
+
+                const data = await response.json();
+                displayParseResults(data);
+                showToast('解析完成！', 'success');
+            } catch (error) {
+                showToast(error.message, 'error');
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayParseResults(data) {
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('parseResults').classList.remove('hidden');
+
+            document.getElementById('summaryText').textContent = data.summary;
+
+            const container = document.getElementById('claimsContainer');
+            container.innerHTML = '';
+
+            data.claims.forEach((claim, index) => {
+                const claimDiv = document.createElement('div');
+                claimDiv.className = 'claim-card rounded-lg p-5 fade-in';
+                claimDiv.style.animationDelay = `${index * 0.1}s`;
+
+                claimDiv.innerHTML = `
+                    <div class="flex items-start mb-3">
+                        <span class="bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded mr-3">主张 ${index + 1}</span>
+                        <h4 class="font-semibold text-gray-800 flex-1">${claim.content}</h4>
+                    </div>
+                    ${claim.evidences.length > 0 ? `
+                        <div class="ml-4 tree-node">
+                            <p class="text-sm font-medium text-gray-600 mb-2">支撑证据:</p>
+                            <div class="space-y-2">
+                                ${claim.evidences.map((evidence, eIndex) => `
+                                    <div class="flex items-start bg-gray-50 rounded p-3">
+                                        <svg class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <div class="flex-1">
+                                            <span class="evidence-tag text-white text-xs px-2 py-0.5 rounded mr-2">${evidence.type}</span>
+                                            <span class="text-gray-700 text-sm">${evidence.content}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : '<p class="ml-4 text-sm text-gray-500 italic">未找到明确的支撑证据</p>'}
+                `;
+
+                container.appendChild(claimDiv);
+            });
+
+            document.getElementById('parseResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function generateChallenges() {
+            const text = document.getElementById('inputText').value.trim();
+            const apiKey = getApiKey();
+
+            if (!text) {
+                showToast('请输入论文核心论述', 'error');
+                return;
+            }
+
+            if (!apiKey) {
+                showToast('请先配置 DeepSeek API Key', 'error');
+                return;
+            }
+
+            showLoading('正在生成审稿人挑战...');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/challenge`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        api_key: apiKey
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '请求失败');
+                }
+
+                const data = await response.json();
+                displayChallengeResults(data);
+                showToast('挑战生成完成！', 'success');
+            } catch (error) {
+                showToast(error.message, 'error');
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayChallengeResults(data) {
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('challengeResults').classList.remove('hidden');
+
+            document.getElementById('assessmentText').textContent = data.overall_assessment;
+
+            const container = document.getElementById('challengesContainer');
+            container.innerHTML = '';
+
+            data.challenges.forEach((challenge, index) => {
+                const challengeDiv = document.createElement('div');
+                challengeDiv.className = 'fade-in';
+                challengeDiv.style.animationDelay = `${index * 0.15}s`;
+
+                const typeColors = {
+                    '因果倒置': 'bg-red-100 text-red-800',
+                    '样本偏差': 'bg-orange-100 text-orange-800',
+                    '未控制变量': 'bg-yellow-100 text-yellow-800',
+                    '相关性不等于因果性': 'bg-purple-100 text-purple-800',
+                    '选择性报告': 'bg-pink-100 text-pink-800',
+                    '过度概括': 'bg-blue-100 text-blue-800',
+                    '循环论证': 'bg-indigo-100 text-indigo-800',
+                    '诉诸权威而非证据': 'bg-teal-100 text-teal-800'
+                };
+
+                const typeColor = typeColors[challenge.type] || 'bg-gray-100 text-gray-800';
+
+                challengeDiv.innerHTML = `
+                    <div class="challenge-card rounded-lg p-5 mb-4">
+                        <div class="flex items-start mb-3">
+                            <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded mr-3">挑战 ${index + 1}</span>
+                            <span class="${typeColor} text-xs font-medium px-2 py-1 rounded">${challenge.type}</span>
+                        </div>
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-gray-800 font-medium leading-relaxed">${challenge.question}</p>
+                        </div>
+                    </div>
+                    <div class="suggestion-card rounded-lg p-5 ml-4">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                            <div>
+                                <h5 class="text-green-800 font-semibold mb-1">修补建议</h5>
+                                <p class="text-green-700 text-sm leading-relaxed">${challenge.suggestion}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(challengeDiv);
+            });
+
+            document.getElementById('challengeResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('deepseek_api_key');
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+            }
+
+            document.getElementById('apiKey').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    saveApiKey();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
