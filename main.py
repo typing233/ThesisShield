@@ -146,9 +146,9 @@ async def generate_challenges(request: TextParseRequest):
     raise HTTPException(status_code=500, detail="挑战生成结果格式错误")
 
 @app.post("/api/pipeline/stream")
-async def stream_pipeline(request: TextParseRequest):
+async def stream_pipeline_post(request: TextParseRequest):
     """
-    流式执行流水线，逐个阶段返回结果
+    流式执行流水线，逐个阶段返回结果 (POST 版本)
     """
     api_key = request.api_key or settings.DEEPSEEK_API_KEY
     
@@ -159,6 +159,38 @@ async def stream_pipeline(request: TextParseRequest):
     
     async def generate():
         async for event in orchestrator.execute_stream(request.text):
+            event_type = event.get('type', 'message')
+            if event_type in ['pipeline_complete', 'pipeline_error']:
+                yield f"event: {event_type}\n"
+            yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+    
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*"
+        }
+    )
+
+@app.get("/api/pipeline/stream")
+async def stream_pipeline_get(text: str, api_key: Optional[str] = None):
+    """
+    流式执行流水线，逐个阶段返回结果 (GET 版本，用于 EventSource)
+    """
+    api_key = api_key or settings.DEEPSEEK_API_KEY
+    
+    if not api_key:
+        raise HTTPException(status_code=400, detail="请提供有效的 DeepSeek API Key")
+    
+    orchestrator = PipelineOrchestrator(api_key=api_key)
+    
+    async def generate():
+        async for event in orchestrator.execute_stream(text):
+            event_type = event.get('type', 'message')
+            if event_type in ['pipeline_complete', 'pipeline_error']:
+                yield f"event: {event_type}\n"
             yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
     
     return StreamingResponse(
