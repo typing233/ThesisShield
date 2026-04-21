@@ -1,17 +1,20 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import httpx
 import json
+import asyncio
 from config import settings
+from pipeline import PipelineOrchestrator
+from pipeline.models import StageStatus
 
 app = FastAPI(
     title="ThesisShield - 学术论文对抗性压力测试平台",
     description="通过自动解析文本逻辑链并模拟审稿人攻击，帮助学者可视化并修补论证漏洞",
-    version="1.0.0"
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -49,6 +52,25 @@ class ReviewerChallengeResponse(BaseModel):
     challenges: List[Challenge]
     overall_assessment: str
 
+class PipelineProgress(BaseModel):
+    stage: str
+    status: str
+    message: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
+
+class DefenseRetestRequest(BaseModel):
+    statement_id: str
+    original_text: str
+    modified_text: str
+    attack_type: str
+    api_key: Optional[str] = None
+
+class DefenseRetestResponse(BaseModel):
+    is_defended: bool
+    score: float
+    feedback: str
+    suggestion: Optional[str] = None
+
 async def call_deepseek_api(messages: List[dict], api_key: str, model: str = "deepseek-chat") -> dict:
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -84,46 +106,21 @@ async def parse_text(request: TextParseRequest):
     if not api_key:
         raise HTTPException(status_code=400, detail="请提供有效的 DeepSeek API Key")
     
-    system_prompt = """你是一位经验丰富的学术论文审稿人和逻辑分析专家。你的任务是分析给定的学术文本，提取出核心主张和支撑证据。
-
-请按照以下JSON格式输出结果：
-{
-    "claims": [
-        {
-            "id": "claim_1",
-            "content": "核心主张的内容",
-            "evidences": [
-                {"content": "支撑证据1的内容", "type": "实验数据/统计数据/理论引用/案例分析等"},
-                {"content": "支撑证据2的内容", "type": "..."}
-            ]
-        }
-    ],
-    "summary": "对整个文本逻辑结构的简要总结"
-}
-
-要求：
-1. 识别文本中的所有核心主张（通常是作者的主要观点、假设或结论）
-2. 为每个主张找出所有直接支撑的证据
-3. 证据类型包括：实验数据、统计数据、理论引用、案例分析、逻辑推理、文献支持等
-4. 如果某些证据支撑多个主张，可以重复引用
-5. summary部分简要说明文本的整体论证结构和逻辑关系
-6. 确保输出是严格的JSON格式，不要有额外的解释文字"""
-
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"请分析以下学术文本并提取核心主张和证据：\n\n{request.text}"}
-    ]
+    orchestrator = PipelineOrchestrator(api_key=api_key)
+    result = await orchestrator.execute(request.text)
     
-    response = await call_deepseek_api(messages, api_key)
+    if result.overall_status == StageStatus.FAILED:
+        error_msg = "流水线执行失败"
+        for stage in result.stages:
+            if stage.status == StageStatus.FAILED and stage.error:
+                error_msg = stage.error
+                break
+        raise HTTPException(status_code=500, detail=error_msg)
     
-    try:
-        content = response["choices"][0]["message"]["content"]
-        result = json.loads(content)
-        return TextParseResponse(**result)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="API返回的JSON格式无效")
-    except KeyError:
-        raise HTTPException(status_code=500, detail="API返回格式异常")
+    if result.final_output and "parse_output" in result.final_output:
+        return TextParseResponse(**result.final_output["parse_output"])
+    
+    raise HTTPException(status_code=500, detail="解析结果格式错误")
 
 @app.post("/api/challenge", response_model=ReviewerChallengeResponse)
 async def generate_challenges(request: TextParseRequest):
@@ -132,62 +129,126 @@ async def generate_challenges(request: TextParseRequest):
     if not api_key:
         raise HTTPException(status_code=400, detail="请提供有效的 DeepSeek API Key")
     
-    system_prompt = """你是一位严谨的学术论文审稿人，以发现论证漏洞和提出尖锐挑战而闻名。你的任务是基于给定的学术文本，从逻辑漏洞的角度提出2-3个反事实挑战问题，并提供修补建议。
+    orchestrator = PipelineOrchestrator(api_key=api_key)
+    result = await orchestrator.execute(request.text)
+    
+    if result.overall_status == StageStatus.FAILED:
+        error_msg = "流水线执行失败"
+        for stage in result.stages:
+            if stage.status == StageStatus.FAILED and stage.error:
+                error_msg = stage.error
+                break
+        raise HTTPException(status_code=500, detail=error_msg)
+    
+    if result.final_output and "challenge_output" in result.final_output:
+        return ReviewerChallengeResponse(**result.final_output["challenge_output"])
+    
+    raise HTTPException(status_code=500, detail="挑战生成结果格式错误")
 
-常见逻辑漏洞类型包括：
-1. 因果倒置：假设X导致Y，但实际可能是Y导致X
-2. 样本偏差：样本选择不具有代表性，或样本量不足
-3. 未控制变量：存在混淆变量Z，可能同时影响X和Y
-4. 相关性不等于因果性：观察到X和Y相关，但不一定存在因果关系
-5. 选择性报告：只报告支持结论的数据，忽略矛盾证据
-6. 过度概括：从有限案例得出普遍性结论
-7. 循环论证：用结论本身作为论证前提
-8. 诉诸权威而非证据：过度依赖权威观点而缺乏实证支持
+@app.post("/api/pipeline/stream")
+async def stream_pipeline(request: TextParseRequest):
+    """
+    流式执行流水线，逐个阶段返回结果
+    """
+    api_key = request.api_key or settings.DEEPSEEK_API_KEY
+    
+    if not api_key:
+        raise HTTPException(status_code=400, detail="请提供有效的 DeepSeek API Key")
+    
+    orchestrator = PipelineOrchestrator(api_key=api_key)
+    
+    async def generate():
+        async for event in orchestrator.execute_stream(request.text):
+            yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+    
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*"
+        }
+    )
+
+@app.post("/api/pipeline/full")
+async def full_pipeline(request: TextParseRequest):
+    """
+    执行完整流水线，返回所有阶段的详细结果
+    """
+    api_key = request.api_key or settings.DEEPSEEK_API_KEY
+    
+    if not api_key:
+        raise HTTPException(status_code=400, detail="请提供有效的 DeepSeek API Key")
+    
+    orchestrator = PipelineOrchestrator(api_key=api_key)
+    result = await orchestrator.execute(request.text)
+    
+    return {
+        "overall_status": result.overall_status,
+        "total_duration_ms": result.total_duration_ms,
+        "stages": [stage.model_dump() for stage in result.stages],
+        "final_output": result.final_output
+    }
+
+@app.post("/api/defense/retest", response_model=DefenseRetestResponse)
+async def defense_retest(request: DefenseRetestRequest):
+    """
+    防御重测：验证修改后的陈述是否能够抵御特定类型的攻击
+    """
+    api_key = request.api_key or settings.DEEPSEEK_API_KEY
+    
+    if not api_key:
+        raise HTTPException(status_code=400, detail="请提供有效的 DeepSeek API Key")
+    
+    system_prompt = """你是一位严谨的学术论文审稿人。你的任务是评估修改后的陈述是否能够抵御特定类型的逻辑漏洞攻击。
+
+请分析以下内容：
+1. 原始陈述存在的漏洞类型
+2. 修改后的陈述
+3. 判断修改是否有效防御了该漏洞
 
 请按照以下JSON格式输出结果：
 {
-    "challenges": [
-        {
-            "id": "challenge_1",
-            "type": "因果倒置",
-            "question": "如果X并非导致Y的唯一原因，你目前的证据能否排除Z的干扰？",
-            "suggestion": "建议通过控制变量实验或工具变量分析来排除Z的干扰，或收集更多纵向数据来确立因果方向。"
-        },
-        {
-            "id": "challenge_2",
-            "type": "样本偏差",
-            "question": "你的样本选择是否存在潜在偏差？如果扩大样本范围或采用随机抽样，结论是否仍然成立？",
-            "suggestion": "建议扩大样本规模，采用随机抽样方法，或对样本特征进行敏感性分析以验证结论的稳健性。"
-        },
-        {
-            "id": "challenge_3",
-            "type": "未控制变量",
-            "question": "是否存在未观察到的混淆变量同时影响自变量和因变量？你如何排除这种可能性？",
-            "suggestion": "建议通过准自然实验设计、双重差分法或倾向得分匹配等方法来减少混淆变量的影响。"
-        }
-    ],
-    "overall_assessment": "总体而言，这篇论文的论证在[某个方面]较为薄弱，主要问题在于[简要说明]。建议重点关注[主要改进方向]以增强论证的说服力。"
+    "is_defended": true/false,
+    "score": 0.85,
+    "feedback": "修改后的陈述通过增加控制变量的说明，有效防御了未控制变量的攻击...",
+    "suggestion": "建议进一步提供具体的控制变量列表和统计检验结果..."
 }
 
 要求：
-1. 分析文本中存在的具体逻辑漏洞，不要泛泛而谈
-2. 每个挑战问题都要与文本内容直接相关，具有针对性
-3. 修补建议要具体可行，提供学术研究中常用的解决方案
-4. 提出2-3个挑战，选择文本中最明显的漏洞
-5. overall_assessment部分要客观总结论证的整体质量和主要问题
-6. 确保输出是严格的JSON格式，不要有额外的解释文字"""
+1. is_defended: 布尔值，表示是否成功防御
+2. score: 0.0-1.0的分数，表示防御的有效性
+3. feedback: 详细的评估反馈
+4. suggestion: 可选的进一步改进建议（如果is_defended为false则必须提供）"""
 
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"请作为审稿人分析以下学术文本，找出潜在的逻辑漏洞并提出挑战问题：\n\n{request.text}"}
+        {"role": "user", "content": f"""请评估以下防御修改：
+
+漏洞类型：{request.attack_type}
+
+原始陈述相关上下文：
+{request.original_text}
+
+修改后的陈述：
+{request.modified_text}
+
+请判断修改是否有效防御了该类型的逻辑漏洞攻击。"""}
     ]
     
-    response = await call_deepseek_api(messages, api_key)
-    
     try:
+        response = await call_deepseek_api(messages, api_key)
         content = response["choices"][0]["message"]["content"]
         result = json.loads(content)
-        return ReviewerChallengeResponse(**result)
+        
+        return DefenseRetestResponse(
+            is_defended=result.get("is_defended", False),
+            score=result.get("score", 0.0),
+            feedback=result.get("feedback", "评估完成"),
+            suggestion=result.get("suggestion")
+        )
+        
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="API返回的JSON格式无效")
     except KeyError:
