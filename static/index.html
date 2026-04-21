@@ -95,10 +95,42 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        .tab-active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a67d8;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <!-- Header -->
     <header class="gradient-bg text-white py-8 px-4">
         <div class="max-w-6xl mx-auto">
             <div class="flex items-center justify-between mb-4">
@@ -108,22 +140,21 @@
                     </svg>
                     <div>
                         <h1 class="text-3xl font-bold">ThesisShield</h1>
-                        <p class="text-purple-200 text-sm">学术论文对抗性压力测试平台</p>
+                        <p class="text-purple-200 text-sm">学术论文对抗性压力测试平台 v2.0</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <span class="text-sm text-purple-200">v1.0.0</span>
+                    <span class="text-sm text-purple-200 bg-white/10 px-3 py-1 rounded-full">增强版</span>
                 </div>
             </div>
             <p class="text-purple-100 max-w-2xl">
                 通过自动解析文本逻辑链并模拟审稿人攻击，帮助学者可视化并修补论证漏洞。
-                让您的学术论文在投稿前就经受住最严苛的逻辑考验。
+                新增交互式逻辑图谱、攻防推演沙盘、分步流水线解析等高级功能。
             </p>
         </div>
     </header>
 
     <main class="max-w-6xl mx-auto py-8 px-4">
-        <!-- API Key Configuration -->
         <div class="bg-white rounded-2xl card-shadow p-6 mb-8">
             <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,29 +162,49 @@
                 </svg>
                 API 配置
             </h2>
-            <div class="flex flex-col md:flex-row gap-4">
-                <div class="flex-1">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         DeepSeek API Key
                     </label>
-                    <input type="password" id="apiKey" placeholder="请输入您的 DeepSeek API Key" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                    <div class="flex gap-2">
+                        <input type="password" id="apiKey" placeholder="请输入您的 DeepSeek API Key" 
+                            class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                        <button onclick="toggleApiKeyVisibility()" class="px-4 py-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors" title="显示/隐藏">
+                            <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="md:w-48 flex items-end">
-                    <button onclick="saveApiKey()" class="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                <div class="flex items-end">
+                    <button onclick="saveApiKey()" class="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                        </svg>
                         保存配置
                     </button>
                 </div>
             </div>
-            <p class="text-sm text-gray-500 mt-3">
-                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                您的 API Key 仅保存在本地浏览器中，不会发送到我们的服务器。
-            </p>
+            <div class="mt-4 flex items-center justify-between">
+                <p class="text-sm text-gray-500 flex items-center">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    您的 API Key 仅保存在本地浏览器中，不会发送到我们的服务器。
+                </p>
+                <div id="apiKeyStatus" class="hidden">
+                    <span class="text-sm text-green-600 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        已保存
+                    </span>
+                </div>
+            </div>
         </div>
 
-        <!-- Input Section -->
         <div class="bg-white rounded-2xl card-shadow p-6 mb-8">
             <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,12 +217,19 @@
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-vertical font-mono text-sm"></textarea>
             
             <div class="flex flex-col sm:flex-row gap-4 mt-6">
-                <button onclick="parseText()" id="parseBtn" 
+                <button onclick="runFullPipeline()" id="pipelineBtn" 
                     class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    完整分析（推荐）
+                </button>
+                <button onclick="parseText()" id="parseBtn" 
+                    class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-medium flex items-center justify-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                     </svg>
-                    解析逻辑结构
+                    仅解析逻辑
                 </button>
                 <button onclick="generateChallenges()" id="challengeBtn"
                     class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg hover:from-red-600 hover:to-orange-600 transition-all font-medium flex items-center justify-center">
@@ -183,94 +241,233 @@
             </div>
         </div>
 
-        <!-- Loading Indicator -->
-        <div id="loadingIndicator" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-2xl p-8 text-center">
-                <div class="loading-spinner mx-auto mb-4"></div>
-                <p id="loadingText" class="text-gray-700 font-medium">正在分析中...</p>
+        <div id="pipelineProgress" class="hidden bg-white rounded-2xl card-shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                流水线执行进度
+            </h3>
+            <div class="space-y-4">
+                <div id="stage1" class="flex items-center p-3 bg-gray-50 rounded-lg">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-4">
+                        <span class="text-sm font-medium text-gray-500">1</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-gray-700">提取陈述</span>
+                            <span id="stage1Status" class="text-sm text-gray-500">等待中</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="stage2" class="flex items-center p-3 bg-gray-50 rounded-lg">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-4">
+                        <span class="text-sm font-medium text-gray-500">2</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-gray-700">配对逻辑链</span>
+                            <span id="stage2Status" class="text-sm text-gray-500">等待中</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="stage3" class="flex items-center p-3 bg-gray-50 rounded-lg">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-4">
+                        <span class="text-sm font-medium text-gray-500">3</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-gray-700">执行攻击验证</span>
+                            <span id="stage3Status" class="text-sm text-gray-500">等待中</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="stage4" class="flex items-center p-3 bg-gray-50 rounded-lg">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-4">
+                        <span class="text-sm font-medium text-gray-500">4</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-gray-700">格式化输出</span>
+                            <span id="stage4Status" class="text-sm text-gray-500">等待中</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Results Section -->
         <div id="resultsSection" class="hidden space-y-8">
-            <!-- Logic Structure Display -->
-            <div id="parseResults" class="hidden">
-                <div class="bg-white rounded-2xl card-shadow p-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                        <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
-                        </svg>
-                        逻辑结构分析
-                    </h2>
-                    
-                    <div id="summarySection" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                        <h3 class="font-semibold text-blue-800 mb-2 flex items-center">
+            <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+                <div class="flex border-b border-gray-200">
+                    <button onclick="switchTab('graph')" id="tab-graph" class="flex-1 px-6 py-4 text-sm font-medium tab-active transition-colors">
+                        <span class="flex items-center justify-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
                             </svg>
-                            结构摘要
-                        </h3>
-                        <p id="summaryText" class="text-blue-700"></p>
-                    </div>
-
-                    <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
-                        </svg>
-                        核心主张与支撑证据
-                    </h3>
-                    <div id="claimsContainer" class="space-y-4"></div>
+                            逻辑图谱
+                        </span>
+                    </button>
+                    <button onclick="switchTab('sandbox')" id="tab-sandbox" class="flex-1 px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                        <span class="flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>
+                            </svg>
+                            攻防沙盘
+                        </span>
+                    </button>
+                    <button onclick="switchTab('narrative')" id="tab-narrative" class="flex-1 px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                        <span class="flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                            滚动叙事
+                        </span>
+                    </button>
+                    <button onclick="switchTab('classic')" id="tab-classic" class="flex-1 px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                        <span class="flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                            </svg>
+                            传统视图
+                        </span>
+                    </button>
                 </div>
-            </div>
+                
+                <div id="content-graph" class="p-6">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800">交互式逻辑图谱</h3>
+                        <div class="flex gap-2">
+                            <button onclick="replayGraphAnimation()" class="px-4 py-2 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">
+                                重新播放动画
+                            </button>
+                            <button onclick="resetGraphView()" class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                                重置视图
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <canvas id="graphCanvas" class="w-full rounded-lg cursor-grab active:cursor-grabbing"></canvas>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-4 text-sm">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 rounded-full bg-purple-500 mr-2"></div>
+                            <span class="text-gray-600">主张</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+                            <span class="text-gray-600">证据</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 rounded-full bg-orange-500 mr-2"></div>
+                            <span class="text-gray-600">假设</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="content-sandbox" class="hidden p-6">
+                    <div id="sandboxContainer"></div>
+                </div>
+                
+                <div id="content-narrative" class="hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                        <div class="lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden bg-gray-50 p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">逻辑图谱概览</h3>
+                            <canvas id="narrativeGraphCanvas" class="w-full rounded-lg"></canvas>
+                            <p class="text-sm text-gray-500 mt-4 text-center">滚动右侧内容查看详细叙事</p>
+                        </div>
+                        <div id="narrativeContainer" class="p-6">
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="content-classic" class="hidden p-6">
+                    <div id="parseResults" class="hidden mb-8">
+                        <div class="bg-white rounded-xl p-6">
+                            <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                                <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                                </svg>
+                                逻辑结构分析
+                            </h3>
+                            
+                            <div id="summarySection" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                <h4 class="font-semibold text-blue-800 mb-2 flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    结构摘要
+                                </h4>
+                                <p id="summaryText" class="text-blue-700"></p>
+                            </div>
 
-            <!-- Reviewer Challenges Display -->
-            <div id="challengeResults" class="hidden">
-                <div class="bg-white rounded-2xl card-shadow p-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                        <svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                        </svg>
-                        审稿人挑战
-                    </h2>
-
-                    <div id="overallAssessment" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                        <h3 class="font-semibold text-yellow-800 mb-2 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            总体评估
-                        </h3>
-                        <p id="assessmentText" class="text-yellow-700"></p>
+                            <h4 class="font-semibold text-gray-800 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                                </svg>
+                                核心主张与支撑证据
+                            </h4>
+                            <div id="claimsContainer" class="space-y-4"></div>
+                        </div>
                     </div>
 
-                    <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        挑战问题
-                    </h3>
-                    <div id="challengesContainer" class="space-y-6"></div>
+                    <div id="challengeResults" class="hidden">
+                        <div class="bg-white rounded-xl p-6">
+                            <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                                <svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                                审稿人挑战
+                            </h3>
+
+                            <div id="overallAssessment" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                                <h4 class="font-semibold text-yellow-800 mb-2 flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    总体评估
+                                </h4>
+                                <p id="assessmentText" class="text-yellow-700"></p>
+                            </div>
+
+                            <h4 class="font-semibold text-gray-800 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                挑战问题
+                            </h4>
+                            <div id="challengesContainer" class="space-y-6"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="bg-gray-800 text-white py-8 px-4 mt-12">
         <div class="max-w-6xl mx-auto text-center">
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                 </svg>
-                <span class="font-semibold">ThesisShield</span>
+                <span class="font-semibold">ThesisShield v2.0</span>
             </div>
             <p class="text-gray-400 text-sm">帮助学者构建更严谨的学术论证</p>
+            <p class="text-gray-500 text-xs mt-2">
+                新功能：交互式逻辑图谱 | 攻防推演沙盘 | 分步流水线解析 | 防御重测
+            </p>
             <p class="text-gray-500 text-xs mt-2">© 2024 ThesisShield. All rights reserved.</p>
         </div>
     </footer>
 
+    <script src="/static/graph-visualizer.js"></script>
+    <script src="/static/attack-sandbox.js"></script>
     <script>
         const API_BASE = window.location.origin;
+        let graphVisualizer = null;
+        let narrativeVisualizer = null;
+        let attackSandbox = null;
+        let currentPipelineData = null;
 
         function getApiKey() {
             return localStorage.getItem('deepseek_api_key') || document.getElementById('apiKey').value;
@@ -281,6 +478,25 @@
             if (apiKey) {
                 localStorage.setItem('deepseek_api_key', apiKey);
                 showToast('API Key 已保存到本地', 'success');
+                const statusEl = document.getElementById('apiKeyStatus');
+                if (statusEl) {
+                    statusEl.classList.remove('hidden');
+                    setTimeout(() => statusEl.classList.add('hidden'), 3000);
+                }
+            } else {
+                showToast('请输入有效的 API Key', 'error');
+            }
+        }
+
+        function toggleApiKeyVisibility() {
+            const input = document.getElementById('apiKey');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>';
+            } else {
+                input.type = 'password';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
             }
         }
 
@@ -297,12 +513,233 @@
         }
 
         function showLoading(text = '正在分析中...') {
-            document.getElementById('loadingText').textContent = text;
-            document.getElementById('loadingIndicator').classList.remove('hidden');
+            const indicator = document.getElementById('loadingIndicator');
+            if (indicator) {
+                document.getElementById('loadingText').textContent = text;
+                indicator.classList.remove('hidden');
+            }
         }
 
         function hideLoading() {
-            document.getElementById('loadingIndicator').classList.add('hidden');
+            const indicator = document.getElementById('loadingIndicator');
+            if (indicator) {
+                indicator.classList.add('hidden');
+            }
+        }
+
+        function switchTab(tabId) {
+            const tabs = ['graph', 'sandbox', 'narrative', 'classic'];
+            
+            tabs.forEach(tab => {
+                const tabBtn = document.getElementById(`tab-${tab}`);
+                const content = document.getElementById(`content-${tab}`);
+                
+                if (tab === tabId) {
+                    tabBtn.classList.add('tab-active');
+                    tabBtn.classList.remove('text-gray-500');
+                    content.classList.remove('hidden');
+                } else {
+                    tabBtn.classList.remove('tab-active');
+                    tabBtn.classList.add('text-gray-500');
+                    content.classList.add('hidden');
+                }
+            });
+
+            if (tabId === 'graph' && currentPipelineData) {
+                if (!graphVisualizer) {
+                    graphVisualizer = new LogicGraphVisualizer('graphCanvas');
+                }
+                setTimeout(() => {
+                    if (graphVisualizer) {
+                        graphVisualizer.resize();
+                    }
+                }, 100);
+            } else if (tabId === 'sandbox' && currentPipelineData) {
+                if (!attackSandbox) {
+                    attackSandbox = new AttackSandbox('sandboxContainer');
+                    attackSandbox.setOnRetestCallback(handleDefenseRetest);
+                }
+                setTimeout(() => {
+                    const rawData = currentPipelineData.final_output?.raw_data;
+                    if (rawData) {
+                        attackSandbox.setData(
+                            rawData.statements || [],
+                            rawData.attacks || [],
+                            []
+                        );
+                    }
+                }, 100);
+            } else if (tabId === 'narrative' && currentPipelineData) {
+                if (!narrativeVisualizer) {
+                    narrativeVisualizer = new LogicGraphVisualizer('narrativeGraphCanvas');
+                }
+                setTimeout(() => {
+                    if (narrativeVisualizer) {
+                        narrativeVisualizer.resize();
+                    }
+                    buildNarrativeContent();
+                }, 100);
+            }
+        }
+
+        async function handleDefenseRetest(data) {
+            const apiKey = getApiKey();
+            
+            if (!apiKey) {
+                showToast('请先配置 DeepSeek API Key', 'error');
+                throw new Error('API Key not configured');
+            }
+
+            const response = await fetch(`${API_BASE}/api/defense/retest`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...data,
+                    api_key: apiKey
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || '请求失败');
+            }
+
+            return await response.json();
+        }
+
+        function buildNarrativeContent() {
+            const container = document.getElementById('narrativeContainer');
+            if (!container || !currentPipelineData) return;
+
+            const rawData = currentPipelineData.final_output?.raw_data;
+            if (!rawData) return;
+
+            const sections = [];
+            const statements = rawData.statements || [];
+            const attacks = rawData.attacks || [];
+
+            statements.forEach((stmt, index) => {
+                const stmtAttacks = attacks.filter(a => a.target_statement_id === stmt.id);
+                const hasAttack = stmtAttacks.length > 0;
+
+                sections.push({
+                    nodeId: stmt.id,
+                    type: stmt.type,
+                    title: `${stmt.type === 'claim' ? '核心主张' : stmt.type === 'evidence' ? '支撑证据' : '隐含假设'} ${index + 1}`,
+                    content: stmt.content,
+                    connections: hasAttack ? `⚠️ 存在 ${stmtAttacks.length} 个潜在漏洞` : null
+                });
+
+                if (hasAttack) {
+                    stmtAttacks.forEach((attack, aIndex) => {
+                        sections.push({
+                            nodeId: null,
+                            type: 'attack',
+                            title: `漏洞 ${index + 1}.${aIndex + 1}: ${attack.attack_type}`,
+                            content: attack.question,
+                            connections: `建议：${attack.suggestion}`
+                        });
+                    });
+                }
+            });
+
+            container.innerHTML = '';
+            
+            sections.forEach((section, index) => {
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'narrative-section min-h-[300px] flex items-center py-16';
+                sectionEl.dataset.sectionIndex = index;
+                
+                const typeColors = {
+                    claim: 'border-purple-500',
+                    evidence: 'border-green-500',
+                    assumption: 'border-orange-500',
+                    attack: 'border-red-500'
+                };
+                
+                const typeBadgeColors = {
+                    claim: 'bg-purple-100 text-purple-800',
+                    evidence: 'bg-green-100 text-green-800',
+                    assumption: 'bg-orange-100 text-orange-800',
+                    attack: 'bg-red-100 text-red-800'
+                };
+                
+                const typeLabels = {
+                    claim: '核心主张',
+                    evidence: '支撑证据',
+                    assumption: '隐含假设',
+                    attack: '逻辑漏洞'
+                };
+
+                sectionEl.innerHTML = `
+                    <div class="max-w-xl mx-auto px-6">
+                        <div class="bg-white rounded-xl shadow-lg p-8 border-l-4 ${typeColors[section.type] || 'border-gray-500'}">
+                            <div class="flex items-center mb-4">
+                                <span class="text-4xl font-bold text-gray-200 mr-4">${index + 1}</span>
+                                <div>
+                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${typeBadgeColors[section.type] || 'bg-gray-100 text-gray-800'}">
+                                        ${typeLabels[section.type] || section.type}
+                                    </span>
+                                    <h3 class="text-xl font-semibold text-gray-800 mt-2">${section.title}</h3>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 leading-relaxed">${section.content}</p>
+                            ${section.connections ? `
+                                <div class="mt-4 pt-4 border-t border-gray-100">
+                                    <p class="text-sm text-gray-500">
+                                        <span class="font-medium">${section.connections.includes('⚠️') ? '' : '关联：'}</span>${section.connections}
+                                    </p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(sectionEl);
+            });
+
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const index = parseInt(entry.target.dataset.sectionIndex);
+                            const section = sections[index];
+                            if (section && section.nodeId && narrativeVisualizer) {
+                                narrativeVisualizer.highlightNode(section.nodeId);
+                            }
+                        }
+                    });
+                },
+                { threshold: 0.5 }
+            );
+
+            container.querySelectorAll('.narrative-section').forEach(el => {
+                observer.observe(el);
+            });
+
+            if (narrativeVisualizer && rawData.statements) {
+                const logicChains = rawData.logic_chains || [];
+                const allLinks = [];
+                logicChains.forEach(chain => {
+                    if (chain.links) {
+                        allLinks.push(...chain.links);
+                    }
+                });
+                narrativeVisualizer.setData(rawData.statements, allLinks);
+            }
+        }
+
+        function replayGraphAnimation() {
+            if (graphVisualizer) {
+                graphVisualizer.playAnimation();
+            }
+        }
+
+        function resetGraphView() {
+            if (graphVisualizer) {
+                graphVisualizer.clearHighlight();
+                graphVisualizer.layoutNodes();
+            }
         }
 
         async function parseText() {
@@ -324,13 +761,8 @@
             try {
                 const response = await fetch(`${API_BASE}/api/parse`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        text: text,
-                        api_key: apiKey
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, api_key: apiKey })
                 });
 
                 if (!response.ok) {
@@ -347,6 +779,181 @@
             } finally {
                 hideLoading();
             }
+        }
+
+        async function generateChallenges() {
+            const text = document.getElementById('inputText').value.trim();
+            const apiKey = getApiKey();
+
+            if (!text) {
+                showToast('请输入论文核心论述', 'error');
+                return;
+            }
+
+            if (!apiKey) {
+                showToast('请先配置 DeepSeek API Key', 'error');
+                return;
+            }
+
+            showLoading('正在生成审稿人挑战...');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/challenge`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, api_key: apiKey })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '请求失败');
+                }
+
+                const data = await response.json();
+                displayChallengeResults(data);
+                showToast('挑战生成完成！', 'success');
+            } catch (error) {
+                showToast(error.message, 'error');
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function runFullPipeline() {
+            const text = document.getElementById('inputText').value.trim();
+            const apiKey = getApiKey();
+
+            if (!text) {
+                showToast('请输入论文核心论述', 'error');
+                return;
+            }
+
+            if (!apiKey) {
+                showToast('请先配置 DeepSeek API Key', 'error');
+                return;
+            }
+
+            const progressEl = document.getElementById('pipelineProgress');
+            progressEl.classList.remove('hidden');
+            resetStageStatus();
+
+            try {
+                const eventSource = new EventSource(`${API_BASE}/api/pipeline/stream?text=${encodeURIComponent(text)}&api_key=${encodeURIComponent(apiKey)}`);
+                
+                eventSource.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    handlePipelineEvent(data);
+                };
+
+                eventSource.onerror = (error) => {
+                    console.error('EventSource error:', error);
+                    eventSource.close();
+                };
+
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        eventSource.close();
+                        reject(new Error('请求超时'));
+                    }, 120000);
+
+                    eventSource.addEventListener('pipeline_complete', (event) => {
+                        clearTimeout(timeout);
+                        eventSource.close();
+                        const data = JSON.parse(event.data);
+                        currentPipelineData = data.final_output;
+                        displayFullPipelineResults(currentPipelineData);
+                        resolve();
+                    });
+
+                    eventSource.addEventListener('pipeline_error', (event) => {
+                        clearTimeout(timeout);
+                        eventSource.close();
+                        const data = JSON.parse(event.data);
+                        reject(new Error(data.error || '流水线执行失败'));
+                    });
+                });
+
+            } catch (error) {
+                showToast(error.message, 'error');
+                console.error(error);
+            }
+        }
+
+        function resetStageStatus() {
+            for (let i = 1; i <= 4; i++) {
+                const statusEl = document.getElementById(`stage${i}Status`);
+                const stageEl = document.getElementById(`stage${i}`);
+                if (statusEl) statusEl.textContent = '等待中';
+                if (statusEl) statusEl.className = 'text-sm text-gray-500';
+                if (stageEl) stageEl.classList.remove('bg-green-50', 'bg-red-50', 'glow-effect');
+                if (stageEl) stageEl.classList.add('bg-gray-50');
+            }
+        }
+
+        function handlePipelineEvent(data) {
+            const stageMap = {
+                'statement_extraction': 1,
+                'logic_chain_matching': 2,
+                'attack_validation': 3,
+                'output_formatting': 4
+            };
+
+            if (data.type === 'stage_start') {
+                const stageNum = stageMap[data.stage];
+                if (stageNum) {
+                    const statusEl = document.getElementById(`stage${stageNum}Status`);
+                    const stageEl = document.getElementById(`stage${stageNum}`);
+                    if (statusEl) statusEl.textContent = '执行中...';
+                    if (statusEl) statusEl.className = 'text-sm text-purple-600';
+                    if (stageEl) stageEl.classList.add('glow-effect');
+                }
+            } else if (data.type === 'stage_complete') {
+                const stageNum = stageMap[data.stage];
+                if (stageNum) {
+                    const statusEl = document.getElementById(`stage${stageNum}Status`);
+                    const stageEl = document.getElementById(`stage${stageNum}`);
+                    const success = data.status === 'completed';
+                    
+                    if (statusEl) statusEl.textContent = success ? `完成 (${Math.round(data.duration_ms)}ms)` : '失败';
+                    if (statusEl) statusEl.className = success ? 'text-sm text-green-600' : 'text-sm text-red-600';
+                    if (stageEl) stageEl.classList.remove('bg-gray-50', 'glow-effect');
+                    if (stageEl) stageEl.classList.add(success ? 'bg-green-50' : 'bg-red-50');
+                }
+            }
+        }
+
+        function displayFullPipelineResults(data) {
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.classList.remove('hidden');
+
+            if (data.parse_output) {
+                displayParseResults(data.parse_output);
+            }
+            if (data.challenge_output) {
+                displayChallengeResults(data.challenge_output);
+            }
+
+            const rawData = data.raw_data;
+            if (rawData && rawData.statements) {
+                if (!graphVisualizer) {
+                    graphVisualizer = new LogicGraphVisualizer('graphCanvas');
+                }
+
+                const logicChains = rawData.logic_chains || [];
+                const allLinks = [];
+                logicChains.forEach(chain => {
+                    if (chain.links) {
+                        allLinks.push(...chain.links);
+                    }
+                });
+
+                graphVisualizer.setData(rawData.statements, allLinks);
+            }
+
+            switchTab('graph');
+
+            showToast('完整分析完成！', 'success');
         }
 
         function displayParseResults(data) {
@@ -392,50 +999,6 @@
             });
 
             document.getElementById('parseResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        async function generateChallenges() {
-            const text = document.getElementById('inputText').value.trim();
-            const apiKey = getApiKey();
-
-            if (!text) {
-                showToast('请输入论文核心论述', 'error');
-                return;
-            }
-
-            if (!apiKey) {
-                showToast('请先配置 DeepSeek API Key', 'error');
-                return;
-            }
-
-            showLoading('正在生成审稿人挑战...');
-
-            try {
-                const response = await fetch(`${API_BASE}/api/challenge`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        text: text,
-                        api_key: apiKey
-                    })
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || '请求失败');
-                }
-
-                const data = await response.json();
-                displayChallengeResults(data);
-                showToast('挑战生成完成！', 'success');
-            } catch (error) {
-                showToast(error.message, 'error');
-                console.error(error);
-            } finally {
-                hideLoading();
-            }
         }
 
         function displayChallengeResults(data) {
@@ -493,8 +1056,6 @@
 
                 container.appendChild(challengeDiv);
             });
-
-            document.getElementById('challengeResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
